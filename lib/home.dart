@@ -1,7 +1,10 @@
+import 'dart:convert';
 
+import 'package:http/http.dart' as http;
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
+import 'DataBase/Urlclass.dart';
 import 'package:modal_bottom_sheet/modal_bottom_sheet.dart';
 
 class Home extends StatefulWidget {
@@ -16,6 +19,34 @@ class _HomeState extends State<Home> {
   bool flag1=true;
   String selectedItem2='';
   bool flag2=true;
+  List<dynamic> lang=<dynamic>[];
+ TextEditingController crntlang=TextEditingController();
+    String transl="";
+  List<dynamic>Languages=<dynamic>[];
+  @override
+  void initState(){
+    super.initState();
+    getDataFromApi();
+  }
+  Future<void> getDataFromApi() async {
+    print("hyy");
+    var url = "${Urlclass.url}/languages";
+    var res = await http.get(Uri.parse(url),headers: {
+    'Accept-Encoding': 'application/gzip',
+    'X-RapidAPI-Key': '98dd68b043msh641b4c65dfaf3e0p126168jsn32bed3c9e24d',
+    'X-RapidAPI-Host': 'google-translate1.p.rapidapi.com'});
+    var responsebody = json.decode(res.body);
+    print(responsebody['data']['languages']);
+setState(() {
+  lang=responsebody['data']['languages'];
+});
+    // setState(() {
+    //   Languages = responsebody['data'];
+    //   print(Languages);
+    // });
+
+    }
+
 
   @override
   Widget build(BuildContext context) {
@@ -67,7 +98,7 @@ class _HomeState extends State<Home> {
 
                           shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(10)),
-                          child: Text(flag2?'Translated Language':selectedItem2,style: TextStyle(color: Colors.white),)
+                          child: Text( flag2?'Translated Language':selectedItem2,style: TextStyle(color: Colors.white),)
                       ),
                     ),
                   ],
@@ -83,7 +114,17 @@ class _HomeState extends State<Home> {
                 height:150 ,
                 width:MediaQuery.of(context).size.width,
                 padding: const EdgeInsets.all(15),
-                child: Text('hola',),
+                child: TextFormField(maxLines: 5,controller:crntlang,onChanged: (text) async{
+                  var url = "${Urlclass.url}";
+                  var res = await http.post(Uri.parse(url),headers: {
+                    'content-type':'application/x-www-form-urlencoded',
+                    'Accept-Encoding': 'application/gzip',
+                    'X-RapidAPI-Key': '98dd68b043msh641b4c65dfaf3e0p126168jsn32bed3c9e24d',
+                    'X-RapidAPI-Host': 'google-translate1.p.rapidapi.com',
+                  'data':text});
+                  var responsebody = json.decode(res.body);
+                print(responsebody);
+                },),
               ),
               SizedBox(height: 40,),
               Text('Translate To:Hindi'),
@@ -132,18 +173,12 @@ class _HomeState extends State<Home> {
     showModalBottomSheet(context: context, builder: (context){
       return Column(
         children:<Widget> [
+          for(int i=0;i<lang.length;i++)
           ListTile(
-            title:Text('Hindi'),
+            title:Text(lang[i]['language']),
             onTap: ()=>selectLanguage2('Hindi'),
           ),
-          ListTile(
-            title:Text('Marati'),
-            onTap: ()=>selectLanguage2('Marati'),
-          ),
-          ListTile(
-            title:Text('Arabi'),
-            onTap: ()=>selectLanguage2('Arabi'),
-          ),
+
         ],
       );
     });
